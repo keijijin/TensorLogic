@@ -1,0 +1,83 @@
+# ====================================
+# 鳥の飛行能力に関する矛盾検出ルール
+# ====================================
+
+metadata:
+  name: "鳥の飛行矛盾検出"
+  version: "1.0"
+  description: "ペンギンは鳥だが飛べない、という矛盾を検出"
+  author: "Tensor Logic Team"
+
+# 事実（デフォルト値）
+facts:
+  # すべての鳥は飛べる（一般論）
+  - name: all_birds_can_fly
+    description: "すべての鳥は飛べる"
+    notation: "∀x: Bird(x) → CanFly(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.9]]  # 一般的には真だが例外がある
+      confidence: 0.9
+  
+  # ペンギンは鳥である
+  - name: penguin_is_bird
+    description: "ペンギンは鳥である"
+    notation: "Bird(penguin)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]  # これは確実に真
+      confidence: 1.0
+  
+  # ペンギンは飛べない（実際の事実）
+  - name: penguin_cannot_fly
+    description: "ペンギンは飛べない"
+    notation: "¬CanFly(penguin)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]  # これも確実に真
+      confidence: 1.0
+
+# 推論ルール
+rules:
+  # ルール1: 鳥→飛べる の推論（三段論法）
+  - name: bird_implies_fly
+    description: "もしペンギンが鳥なら、一般論からペンギンは飛べる"
+    notation: "Bird(penguin) ∧ (Bird→Fly) ⟹ CanFly(penguin)"
+    inputs:
+      - penguin_is_bird
+      - all_birds_can_fly
+    output: penguin_should_fly
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+  
+  # ルール2: 矛盾の同時存在を検証
+  - name: verify_both_claims
+    description: "飛べるはず と 飛べない が同時に真である状態を検証"
+    notation: "CanFly(penguin) ∧ ¬CanFly(penguin)"
+    inputs:
+      - penguin_should_fly
+      - penguin_cannot_fly
+    output: both_claims_exist
+    operation: CONJUNCTION
+    priority: 2
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: penguin_should_fly
+    description: "一般論からの推論: ペンギンは飛べるはず"
+    notation: "P(CanFly(penguin) | Bird(penguin))"
+    expected_value: 0.9
+    tolerance: 0.1
+  
+  - name: both_claims_exist
+    description: "矛盾検出: 飛べるはず(0.9) ∧ 飛べない(1.0)"
+    notation: "P(CanFly ∧ ¬CanFly)"
+    expected_value: 0.9  # CONJUNCTION: min(0.9, 1.0) = 0.9
+    tolerance: 0.1
+    # NOTE: 高い値 = 矛盾が強く存在
+    # 理想的には0に近いべきだが、一般論が0.9なので矛盾度も0.9

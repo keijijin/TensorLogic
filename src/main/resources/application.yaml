@@ -25,6 +25,8 @@ quarkus:
 # LLM API Configuration
 llm:
   openai:
+    # 環境変数 OPENAI_API_KEY から読み込み（推奨）
+    # 未設定の場合は demo-mode で動作
     api-key: ${OPENAI_API_KEY:demo-mode}
     model: gpt-4
     timeout: 30s

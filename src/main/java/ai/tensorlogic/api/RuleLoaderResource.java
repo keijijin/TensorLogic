@@ -75,11 +75,11 @@ public class RuleLoaderResource {
     }
     
     /**
-     * カスタムルールファイルを読み込み
+     * カスタムルールファイルを読み込み（ファイルシステム）
      */
     @POST
     @Path("/load-file")
-    @Operation(summary = "カスタムルールファイルを読み込み")
+    @Operation(summary = "カスタムルールファイルを読み込み（ファイルシステム）")
     public RuleExecutionResult loadFile(FilePathRequest request) {
         RuleLoader.LoadResult loadResult = ruleLoader.loadFromFile(
             request.filePath()
@@ -94,9 +94,31 @@ public class RuleLoaderResource {
             results.size()
         );
     }
+    
+    /**
+     * リソースからルールを読み込み（src/main/resources/配下）
+     */
+    @POST
+    @Path("/load-resource")
+    @Operation(summary = "リソースからルールを読み込み")
+    public RuleExecutionResult loadResource(ResourcePathRequest request) {
+        RuleLoader.LoadResult loadResult = ruleLoader.loadFromResource(
+            request.resourcePath()
+        );
+        
+        Map<String, INDArray> results = engine.forwardChain();
+        
+        return new RuleExecutionResult(
+            loadResult.success(),
+            loadResult.summary(),
+            null,
+            results.size()
+        );
+    }
 }
 
 record FilePathRequest(String filePath) {}
+record ResourcePathRequest(String resourcePath) {}
 
 record RuleExecutionResult(
     boolean success,
