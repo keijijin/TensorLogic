@@ -1,0 +1,81 @@
+# ====================================
+# Tensor Logic ルール定義ファイル
+# ====================================
+# 人間が読みやすい形式でルールを記述
+
+# メタデータ
+metadata:
+  name: "三段論法の例"
+  version: "1.0"
+  description: "ソクラテスの三段論法をTensor Logicで表現"
+  author: "Tensor Logic Team"
+
+# エンティティの定義
+entities:
+  - name: socrates
+    type: individual
+    description: "ソクラテス（個人）"
+  
+  - name: human
+    type: class
+    description: "人間（クラス）"
+  
+  - name: mortal
+    type: class
+    description: "死すべき存在（クラス）"
+
+# 事実（ファクト）の定義
+facts:
+  # ソクラテスは人間である
+  - name: socrates_is_human
+    description: "ソクラテスは人間である"
+    notation: "Human(socrates)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]
+      confidence: 1.0
+  
+  # 人間は死ぬ
+  - name: human_is_mortal
+    description: "人間ならば死ぬ"
+    notation: "Human(x) → Mortal(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.98]]
+      confidence: 0.98
+
+# 推論ルールの定義
+rules:
+  # ルール1: 三段論法（Modus Ponens）
+  - name: modus_ponens_1
+    description: "ソクラテスは人間 ∧ 人間は死ぬ ⟹ ソクラテスは死ぬ"
+    notation: |
+      Human(socrates) ∧ (Human(x) → Mortal(x)) ⟹ Mortal(socrates)
+    
+    # 入力
+    inputs:
+      - socrates_is_human
+      - human_is_mortal
+    
+    # 出力
+    output: socrates_is_mortal
+    
+    # 演算タイプ
+    operation: MODUS_PONENS
+    
+    # 優先度（低い方が先に実行）
+    priority: 1
+    
+    # 有効/無効
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: socrates_is_mortal
+    description: "ソクラテスは死ぬ"
+    notation: "Mortal(socrates)"
+    expected_value: 0.98
+    tolerance: 0.05
+

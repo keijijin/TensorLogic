@@ -1,0 +1,66 @@
+# ====================================
+# 知識グラフ推論ルール
+# ====================================
+
+metadata:
+  name: "友達関係の推論"
+  version: "1.0"
+  description: "ソーシャルネットワークにおける関係推論"
+
+# エンティティ定義
+entities:
+  - name: taro
+    type: person
+    id: 0
+  - name: hanako
+    type: person
+    id: 1
+  - name: jiro
+    type: person
+    id: 2
+
+# 関係の定義
+facts:
+  # 友達関係
+  - name: is_friend
+    description: "直接的な友達関係"
+    notation: "Friend(x, y)"
+    tensor:
+      type: matrix
+      shape: [3, 3]
+      values:
+        - [0.0, 0.9, 0.3]  # 太郎 → (太郎, 花子, 次郎)
+        - [0.9, 0.0, 0.8]  # 花子 → (太郎, 花子, 次郎)
+        - [0.3, 0.8, 0.0]  # 次郎 → (太郎, 花子, 次郎)
+      labels:
+        rows: [taro, hanako, jiro]
+        cols: [taro, hanako, jiro]
+
+# 推論ルール
+rules:
+  # ルール1: 友達の友達
+  - name: friend_of_friend
+    description: "友達の友達を計算"
+    notation: |
+      Friend(x, y) ∧ Friend(y, z) ⟹ FriendOfFriend(x, z)
+    inputs:
+      - is_friend
+      - is_friend
+    output: friend_of_friend
+    operation: CHAIN
+    priority: 1
+    enabled: true
+  
+  # ルール2: 相互友達（論理積）
+  - name: mutual_friends
+    description: "相互に友達である関係"
+    notation: |
+      Friend(x, y) ∧ Friend(y, x) ⟹ MutualFriend(x, y)
+    inputs:
+      - is_friend
+      - is_friend_transposed
+    output: mutual_friends
+    operation: CONJUNCTION
+    priority: 2
+    enabled: true
+

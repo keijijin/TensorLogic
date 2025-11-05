@@ -1,0 +1,313 @@
+# ====================================
+# Tensor Logic Project .gitignore
+# ====================================
+
+# ====================================
+# Maven
+# ====================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ====================================
+# Quarkus
+# ====================================
+**/quarkus.log
+.quarkus/
+quarkus.log
+
+# ====================================
+# Java
+# ====================================
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# ====================================
+# Python
+# ====================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# ====================================
+# IDE - IntelliJ IDEA
+# ====================================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# ====================================
+# IDE - Eclipse
+# ====================================
+.classpath
+.project
+.settings/
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders
+
+# ====================================
+# IDE - VS Code
+# ====================================
+.vscode/
+*.code-workspace
+.history/
+
+# ====================================
+# IDE - NetBeans
+# ====================================
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ====================================
+# macOS
+# ====================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ====================================
+# Windows
+# ====================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ====================================
+# Linux
+# ====================================
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# Logs
+# ====================================
+*.log
+logs/
+*.log.*
+log/
+
+# ====================================
+# Database
+# ====================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ====================================
+# Temporary files
+# ====================================
+*.tmp
+*.temp
+*.cache
+.cache/
+
+# ====================================
+# Environment variables
+# ====================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ====================================
+# API Keys and Secrets
+# ====================================
+**/secrets/
+**/credentials/
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# ====================================
+# ND4J (Deep Learning)
+# ====================================
+*.nd4j
+nd4j-cache/
+
+# ====================================
+# Test coverage
+# ====================================
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ====================================
+# Build artifacts
+# ====================================
+*.native
+*.exe
+*.dll
+*.dylib
+*.o
+*.a
+
+# ====================================
+# Documentation build
+# ====================================
+_build/
+_static/
+_templates/
+site/
+
+# ====================================
+# Package managers
+# ====================================
+node_modules/
+package-lock.json
+yarn.lock
+.pnp.*
+.yarn/
+
+# ====================================
+# Project specific
+# ====================================
+# 大きなPDFや動画ファイルは除外しない
+# （プロジェクトの一部として必要）
+# ただし、生成されたファイルは除外
+**/generated/
+**/tmp/
+
+# OpenAI API Key（重要：コミットしない）
+openai_api_key.txt
+
+# テストデータ（大きなファイル）
+**/test-data/large/
+
+# ====================================
+# Backup files
+# ====================================
+*.bak
+*.backup
+*.old
+*~
+
+# ====================================
+# Compiled documentation
+# ====================================
+docs/_build/
+docs/.doctrees/
+
+# ====================================
+# Deployment
+# ====================================
+.kubernetes/secrets/
+k8s-secrets/
+helm/secrets/
+
+# ====================================
+# Docker
+# ====================================
+.docker/
+docker-compose.override.yml
+
+# ====================================
+# Gradle (もし使用する場合)
+# ====================================
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# ====================================
+# Miscellaneous
+# ====================================
+.factorypath
+.springBeans
+.sts4-cache/
+*.orig
+.attach_pid*
+

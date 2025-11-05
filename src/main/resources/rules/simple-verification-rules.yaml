@@ -1,0 +1,69 @@
+# ====================================
+# 汎用LLM検証用のシンプルなルール
+# ====================================
+
+metadata:
+  name: "シンプル検証ルール"
+  version: "1.0"
+  description: "汎用LLM検証のテスト用ルール"
+  author: "Tensor Logic Team"
+
+# エンティティ
+entities:
+  - name: statement_a
+    type: proposition
+    description: "命題A"
+  
+  - name: statement_b
+    type: proposition
+    description: "命題B"
+  
+  - name: conclusion
+    type: proposition
+    description: "結論"
+
+# 事実（デフォルト値）
+facts:
+  # 命題Aが真である確率
+  - name: statement_a_true
+    description: "命題Aは真である"
+    notation: "P(A)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [0.9]
+      confidence: 0.9
+  
+  # AならばBという関係
+  - name: a_implies_b
+    description: "AならばB"
+    notation: "A → B"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.95]]
+      confidence: 0.95
+
+# 推論ルール
+rules:
+  # ルール1: Modus Ponens（三段論法）
+  - name: modus_ponens_ab
+    description: "A ∧ (A→B) ⟹ B"
+    notation: |
+      P(A) ∧ P(A→B) ⟹ P(B)
+    inputs:
+      - statement_a_true
+      - a_implies_b
+    output: statement_b_true
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: statement_b_true
+    description: "命題Bは真である"
+    notation: "P(B)"
+    expected_value: 0.855
+    tolerance: 0.1
+

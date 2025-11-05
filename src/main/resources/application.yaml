@@ -1,0 +1,45 @@
+# Quarkus Configuration
+quarkus:
+  application:
+    name: llm-tensor-logic-integration
+  
+  http:
+    port: 8080
+  
+  log:
+    level: INFO
+    console:
+      format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{3.}] (%t) %s%e%n"
+    category:
+      "ai.tensorlogic":
+        level: DEBUG
+  
+  # OpenAPI / Swagger UI
+  smallrye-openapi:
+    path: /openapi
+  swagger-ui:
+    always-include: true
+    path: /swagger-ui
+    enable: true
+
+# LLM API Configuration
+llm:
+  openai:
+    api-key: ${OPENAI_API_KEY:demo-mode}
+    model: gpt-4
+    timeout: 30s
+
+# Tensor Logic Configuration
+tensor:
+  logic:
+    validation:
+      threshold: 0.2
+    confidence:
+      min: 0.5
+    contradiction:
+      threshold: 0.3
+
+# Camel Configuration
+camel:
+  main:
+    name: TensorLogicCamel
