@@ -29,6 +29,10 @@ public record BackwardChainingResult(
         Map<String, String> formatted = new HashMap<>();
         for (Map.Entry<String, INDArray> entry : requiredFacts.entrySet()) {
             INDArray array = entry.getValue();
+            if (array == null) {
+                formatted.put(entry.getKey(), "null");
+                continue;
+            }
             if (array.isScalar()) {
                 formatted.put(entry.getKey(), String.format("%.4f", array.getDouble(0)));
             } else if (array.isVector()) {

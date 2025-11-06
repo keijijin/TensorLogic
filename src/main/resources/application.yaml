@@ -40,6 +40,9 @@ tensor:
       min: 0.5
     contradiction:
       threshold: 0.3
+    rules:
+      auto-load:
+        enabled: true  # 起動時に rules/ ディレクトリのルールを自動ロード
 
 # Camel Configuration
 camel:

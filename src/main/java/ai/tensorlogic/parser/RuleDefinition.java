@@ -24,7 +24,8 @@ public record RuleDefinition(
         String name,
         String version,
         String description,
-        String author
+        String author,
+        String namespace  // ルールセットのネームスペース
     ) {}
     
     /**

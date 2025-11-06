@@ -9,6 +9,7 @@ import java.util.Map;
 public record GenericVerificationRequest(
     String query,                           // LLMへの質問
     String ruleFile,                        // ルールファイルのパス（オプション）
+    String namespace,                       // 適用するネームスペース（nullまたは"*"で全ルール）
     Map<String, List<Double>> customFacts,  // カスタム事実（オプション）
     Map<String, Double> expectedOutputs,    // 期待される出力（オプション）
     Double tolerance,                       // 許容誤差（デフォルト: 0.05）

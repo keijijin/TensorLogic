@@ -68,9 +68,9 @@ public class TensorLogicResource {
     @POST
     @Path("/backward-chain")
     @Operation(summary = "後向き推論",
-               description = "目標から逆向きに推論し、必要な前提条件を探索します")
+               description = "目標から逆向きに推論し、必要な前提条件を探索します。namespaceを指定すると、そのネームスペースのルールのみ適用されます。")
     public BackwardChainingResult backwardChain(BackwardChainingRequest request) {
-        return engine.backwardChain(request.goal());
+        return engine.backwardChain(request.goal(), request.namespace());
     }
     
     /**

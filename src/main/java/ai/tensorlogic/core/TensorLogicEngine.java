@@ -59,14 +59,36 @@ public class TensorLogicEngine {
     }
     
     /**
-     * 前向き推論を実行
+     * 前向き推論を実行（全ネームスペース）
      */
     public Map<String, INDArray> forwardChain() {
-        LOG.info("=== 前向き推論を開始 ===");
+        return forwardChain(null);
+    }
+    
+    /**
+     * 前向き推論を実行（ネームスペース指定）
+     * 
+     * @param namespaceFilter ネームスペース（nullまたは"*"の場合は全ルールを適用）
+     */
+    public Map<String, INDArray> forwardChain(String namespaceFilter) {
+        if (namespaceFilter == null || namespaceFilter.equals("*")) {
+            LOG.info("=== 前向き推論を開始（全ネームスペース） ===");
+        } else {
+            LOG.info("=== 前向き推論を開始（ネームスペース: {}） ===", namespaceFilter);
+        }
+        
         Map<String, INDArray> newFacts = new HashMap<>();
         
         for (Map.Entry<String, Rule> entry : rules.entrySet()) {
             Rule rule = entry.getValue();
+            
+            // ネームスペースフィルタリング
+            if (namespaceFilter != null && !namespaceFilter.equals("*") 
+                && !rule.namespace().equals(namespaceFilter)) {
+                LOG.debug("ルール '{}' をスキップ（ネームスペース: {}）", 
+                    entry.getKey(), rule.namespace());
+                continue;
+            }
             
             // すべての入力が揃っているかチェック
             boolean allInputsAvailable = rule.inputs().stream()
@@ -75,17 +97,19 @@ public class TensorLogicEngine {
             if (allInputsAvailable) {
                 INDArray result = applyRule(rule);
                 newFacts.put(rule.output(), result);
-                LOG.info("推論: {} -> {}", rule.inputs(), rule.output());
+                LOG.info("推論: {} -> {} (namespace: {})", 
+                    rule.inputs(), rule.output(), rule.namespace());
             }
         }
         
         // 新しい事実を追加
         facts.putAll(newFacts);
+        LOG.info("前向き推論完了: {}個の新しい事実を導出", newFacts.size());
         return newFacts;
     }
     
     /**
-     * 後向き推論を実行
+     * 後向き推論を実行（全ネームスペース）
      * 
      * 目標から逆向きに推論し、その目標を達成するために必要な前提条件を探索します。
      * 
@@ -93,13 +117,28 @@ public class TensorLogicEngine {
      * @return 後向き推論の結果
      */
     public BackwardChainingResult backwardChain(String goal) {
-        LOG.info("=== 後向き推論を開始: 目標='{}' ===", goal);
+        return backwardChain(goal, null);
+    }
+    
+    /**
+     * 後向き推論を実行（ネームスペース指定）
+     * 
+     * @param goal 達成したい目標（事実の名前）
+     * @param namespaceFilter ネームスペース（nullまたは"*"の場合は全ルールを適用）
+     * @return 後向き推論の結果
+     */
+    public BackwardChainingResult backwardChain(String goal, String namespaceFilter) {
+        if (namespaceFilter == null || namespaceFilter.equals("*")) {
+            LOG.info("=== 後向き推論を開始: 目標='{}' （全ネームスペース） ===", goal);
+        } else {
+            LOG.info("=== 後向き推論を開始: 目標='{}' （ネームスペース: {}） ===", goal, namespaceFilter);
+        }
         
         List<String> path = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         Map<String, INDArray> requiredFacts = new HashMap<>();
         
-        boolean success = backwardChainRecursive(goal, path, visited, requiredFacts);
+        boolean success = backwardChainRecursive(goal, path, visited, requiredFacts, namespaceFilter);
         
         if (success) {
             LOG.info("✓ 後向き推論成功: 目標 '{}' は達成可能", goal);
@@ -116,10 +155,18 @@ public class TensorLogicEngine {
      * 後向き推論の再帰的実装
      */
     private boolean backwardChainRecursive(String goal, List<String> path, 
-                                           Set<String> visited, Map<String, INDArray> requiredFacts) {
+                                           Set<String> visited, Map<String, INDArray> requiredFacts,
+                                           String namespaceFilter) {
+        // 既に計算済み（requiredFactsに存在）の場合
+        if (requiredFacts.containsKey(goal)) {
+            LOG.debug("  ✓ '{}' は既に計算済み", goal);
+            return true;
+        }
+        
         // 既に訪問済みの場合は無限ループを防ぐ
         if (visited.contains(goal)) {
-            return true;
+            LOG.debug("  ⚠ '{}' は訪問済みだが計算されていない（循環参照の可能性）", goal);
+            return false;
         }
         visited.add(goal);
         
@@ -135,14 +182,22 @@ public class TensorLogicEngine {
         for (Map.Entry<String, Rule> entry : rules.entrySet()) {
             Rule rule = entry.getValue();
             
+            // ネームスペースフィルタリング
+            if (namespaceFilter != null && !namespaceFilter.equals("*") 
+                && !rule.namespace().equals(namespaceFilter)) {
+                LOG.debug("  → ルール '{}' をスキップ（ネームスペース: {}）", 
+                    entry.getKey(), rule.namespace());
+                continue;
+            }
+            
             if (rule.output().equals(goal)) {
-                LOG.debug("  → ルール '{}' が目標 '{}' を生成可能: {} -> {}", 
-                    entry.getKey(), goal, rule.inputs(), rule.output());
+                LOG.debug("  → ルール '{}' が目標 '{}' を生成可能: {} -> {} (namespace: {})", 
+                    entry.getKey(), goal, rule.inputs(), rule.output(), rule.namespace());
                 
                 // このルールのすべての入力を再帰的に解決
                 boolean allInputsResolved = true;
                 for (String input : rule.inputs()) {
-                    if (!backwardChainRecursive(input, path, visited, requiredFacts)) {
+                    if (!backwardChainRecursive(input, path, visited, requiredFacts, namespaceFilter)) {
                         allInputsResolved = false;
                         break;
                     }
@@ -150,20 +205,118 @@ public class TensorLogicEngine {
                 
                 if (allInputsResolved) {
                     // すべての入力が解決できた場合、ルールを適用
-                    path.add(goal + " ← [" + String.join(", ", rule.inputs()) + "]");
+                    path.add(goal + " ← [" + String.join(", ", rule.inputs()) + "] (ns: " + rule.namespace() + ")");
                     
-                    // ルールを適用して目標を計算
-                    INDArray result = applyRule(rule);
+                    // ルールを適用して目標を計算（後向き推論用: requiredFactsから取得）
+                    INDArray result = applyRuleForBackwardChaining(rule, requiredFacts);
+                    
+                    // Nullチェック - ルール適用が失敗した場合
+                    if (result == null) {
+                        LOG.warn("  ✗ ルール適用失敗: {} (namespace: {})", goal, rule.namespace());
+                        path.remove(path.size() - 1); // 失敗したパスを削除
+                        continue; // 次のルールを試す
+                    }
+                    
                     requiredFacts.put(goal, result);
                     
-                    LOG.debug("  ✓ ルール適用成功: {} = {}", goal, result);
+                    LOG.debug("  ✓ ルール適用成功: {} = {} (namespace: {})", goal, result, rule.namespace());
                     return true;
                 }
             }
         }
         
-        LOG.debug("  ✗ '{}' を生成するルールが見つかりません", goal);
+        LOG.debug("  ✗ '{}' を生成するルール（namespace={}）が見つかりません", goal, namespaceFilter);
         return false;
+    }
+    
+    /**
+     * ルールを適用（後向き推論用）
+     * requiredFacts から値を取得し、なければ facts から取得
+     */
+    private INDArray applyRuleForBackwardChaining(Rule rule, Map<String, INDArray> requiredFacts) {
+        return switch (rule.operation()) {
+            case MODUS_PONENS -> {
+                // A かつ (A→B) から B を導出
+                INDArray premise = getFactValue(rule.inputs().get(0), requiredFacts);
+                INDArray implication = getFactValue(rule.inputs().get(1), requiredFacts);
+                
+                // Nullチェック
+                if (premise == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (implication == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
+                yield premise.mmul(implication);
+            }
+            case CONJUNCTION -> {
+                // A と B の論理積（最小値）
+                INDArray a = getFactValue(rule.inputs().get(0), requiredFacts);
+                INDArray b = getFactValue(rule.inputs().get(1), requiredFacts);
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
+                yield Transforms.min(a, b);
+            }
+            case DISJUNCTION -> {
+                // A または B の論理和（最大値）
+                INDArray a = getFactValue(rule.inputs().get(0), requiredFacts);
+                INDArray b = getFactValue(rule.inputs().get(1), requiredFacts);
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
+                yield Transforms.max(a, b);
+            }
+            case CHAIN -> {
+                // 関係の合成（行列の積）
+                INDArray a = getFactValue(rule.inputs().get(0), requiredFacts);
+                INDArray b = getFactValue(rule.inputs().get(1), requiredFacts);
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
+                yield a.mmul(b);
+            }
+            default -> throw new IllegalArgumentException("Unknown operation: " + rule.operation());
+        };
+    }
+    
+    /**
+     * 事実の値を取得（requiredFacts を優先、なければ facts から）
+     */
+    private INDArray getFactValue(String factName, Map<String, INDArray> requiredFacts) {
+        // まず requiredFacts から探す（後向き推論で計算された中間結果）
+        if (requiredFacts.containsKey(factName)) {
+            return requiredFacts.get(factName);
+        }
+        // なければ facts から探す（既知の事実）
+        return facts.get(factName);
     }
     
     /**
@@ -175,24 +328,68 @@ public class TensorLogicEngine {
                 // A かつ (A→B) から B を導出
                 INDArray premise = facts.get(rule.inputs().get(0));
                 INDArray implication = facts.get(rule.inputs().get(1));
+                
+                // Nullチェック
+                if (premise == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (implication == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
                 yield premise.mmul(implication);
             }
             case CONJUNCTION -> {
                 // A と B の論理積（最小値）
                 INDArray a = facts.get(rule.inputs().get(0));
                 INDArray b = facts.get(rule.inputs().get(1));
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
                 yield Transforms.min(a, b);
             }
             case DISJUNCTION -> {
                 // A または B の論理和（最大値）
                 INDArray a = facts.get(rule.inputs().get(0));
                 INDArray b = facts.get(rule.inputs().get(1));
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
                 yield Transforms.max(a, b);
             }
             case CHAIN -> {
                 // 関係の合成（行列の積）
                 INDArray a = facts.get(rule.inputs().get(0));
                 INDArray b = facts.get(rule.inputs().get(1));
+                
+                // Nullチェック
+                if (a == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(0));
+                    yield null;
+                }
+                if (b == null) {
+                    LOG.warn("事実が見つかりません: {}", rule.inputs().get(1));
+                    yield null;
+                }
+                
                 yield a.mmul(b);
             }
             default -> throw new IllegalArgumentException("Unknown operation: " + rule.operation());

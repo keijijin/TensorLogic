@@ -325,7 +325,8 @@ np.einsum('ij->ji', A)  # A^T
 | 機能 | 説明 | ステータス |
 |------|------|-----------|
 | **Forward Chaining** | 前向き推論（データ駆動） | ✅ 実装済み |
-| **Backward Chaining** | 後向き推論（目標駆動） | ✅ **NEW!** |
+| **Backward Chaining** | 後向き推論（目標駆動） | ✅ 実装済み |
+| **Namespace** | ルールのネームスペース管理 | ✅ **NEW!** |
 | **LLM統合** | OpenAI GPT連携 | ✅ 実装済み |
 | **ルール外部化** | YAMLでルール定義 | ✅ 実装済み |
 | **REST API** | HTTP/JSON API | ✅ 実装済み |
@@ -367,6 +368,43 @@ curl -X POST http://localhost:8080/api/tensor-logic/backward-chain \
 
 詳細は [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) を参照。
 
+### Namespace（ネームスペース） 🆕
+
+**ルールにネームスペースを付けて、適用するルールを選択可能！**
+
+```yaml
+# rules/your-rules.yaml
+metadata:
+  name: "Your Rule Set"
+  namespace: "your-namespace"  # ← ネームスペース指定
+```
+
+```bash
+# 特定のネームスペースのみ適用
+curl -X POST http://localhost:8080/api/verify/simple \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "Your question",
+    "ruleFile": "rules/your-rules.yaml",
+    "namespace": "loan-approval"
+  }'
+
+# 全ルール適用（ワイルドカード）
+curl -X POST http://localhost:8080/api/verify/simple \
+  -d '{
+    "query": "Your question",
+    "namespace": "*"
+  }'
+```
+
+**メリット:**
+- 🎯 ルールセットの論理的分離
+- 🔍 名前衝突の回避
+- ⚡ 効率的な推論（必要なルールのみ適用）
+- 🧪 テストの容易性
+
+詳細は [NAMESPACE_GUIDE.md](NAMESPACE_GUIDE.md) を参照。
+
 ### クイックスタート（Java版）
 
 ```bash
@@ -385,7 +423,8 @@ curl -X POST http://localhost:8080/api/rules/load-resource \
 ### ドキュメント
 
 - [TENSOR_LOGIC_ENGINE_GUIDE.md](TENSOR_LOGIC_ENGINE_GUIDE.md) - 完全ガイド
-- [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) - 後向き推論ガイド 🆕
+- [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) - 後向き推論ガイド
+- [NAMESPACE_GUIDE.md](NAMESPACE_GUIDE.md) - ネームスペースガイド 🆕
 - [DRD_TO_TENSOR_LOGIC_GUIDE.md](DRD_TO_TENSOR_LOGIC_GUIDE.md) - DRD変換ガイド
 - [VERIFICATION_REPORT_LOAN_APPROVAL.md](VERIFICATION_REPORT_LOAN_APPROVAL.md) - 検証レポート
 

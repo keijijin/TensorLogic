@@ -67,8 +67,12 @@ public class GenericLLMVerifier {
             extractAndRegisterFacts(llmResponse, request);
             
             // 4. 推論エンジンで前向き推論を実行
-            LOG.info("推論エンジンで検証を実行...");
-            Map<String, INDArray> inferredFacts = engine.forwardChain();
+            if (request.namespace() != null && !request.namespace().isBlank()) {
+                LOG.info("推論エンジンで検証を実行（ネームスペース: {}）...", request.namespace());
+            } else {
+                LOG.info("推論エンジンで検証を実行（全ネームスペース）...");
+            }
+            Map<String, INDArray> inferredFacts = engine.forwardChain(request.namespace());
             LOG.info("推論完了: {}個の新しい事実を推論", inferredFacts.size());
             
             // 5. 期待される結果と比較

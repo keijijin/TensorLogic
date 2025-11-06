@@ -6,8 +6,14 @@ import java.util.List;
  * 推論ルールを表すレコード
  * 
  * Java 21のRecordを使用して不変なデータクラスを定義
+ * 
+ * @param namespace ルールのネームスペース（例: "loan-approval", "medical-diagnosis"）
+ * @param inputs 入力事実の名前リスト
+ * @param output 出力事実の名前
+ * @param operation 演算タイプ
  */
 public record Rule(
+    String namespace,
     List<String> inputs,
     String output,
     Operation operation
@@ -28,9 +34,15 @@ public record Rule(
     }
     
     public static class Builder {
+        private String namespace = "default";
         private List<String> inputs;
         private String output;
         private Operation operation = Operation.MODUS_PONENS;
+        
+        public Builder namespace(String namespace) {
+            this.namespace = namespace != null ? namespace : "default";
+            return this;
+        }
         
         public Builder inputs(String... inputs) {
             this.inputs = List.of(inputs);
@@ -48,7 +60,7 @@ public record Rule(
         }
         
         public Rule build() {
-            return new Rule(inputs, output, operation);
+            return new Rule(namespace, inputs, output, operation);
         }
     }
 }

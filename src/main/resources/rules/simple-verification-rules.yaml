@@ -7,6 +7,7 @@ metadata:
   version: "1.0"
   description: "汎用LLM検証のテスト用ルール"
   author: "Tensor Logic Team"
+  namespace: "simple-verification"
 
 # エンティティ
 entities:

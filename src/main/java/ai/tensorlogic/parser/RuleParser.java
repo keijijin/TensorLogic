@@ -76,12 +76,19 @@ public class RuleParser {
     
     /**
      * RuleSpecからRuleオブジェクトに変換
+     * 
+     * @param spec ルール仕様
+     * @param namespace ネームスペース（nullの場合は"default"）
      */
-    public Rule convertToRule(RuleDefinition.RuleSpec spec) {
+    public Rule convertToRule(RuleDefinition.RuleSpec spec, String namespace) {
         // operation文字列をenumに変換
         Rule.Operation operation = Rule.Operation.valueOf(spec.operation());
         
+        // ネームスペースがnullまたは空の場合は"default"を使用
+        String effectiveNamespace = (namespace != null && !namespace.isBlank()) ? namespace : "default";
+        
         return Rule.builder()
+            .namespace(effectiveNamespace)
             .inputs(spec.inputs().toArray(new String[0]))
             .output(spec.output())
             .operation(operation)
@@ -93,6 +100,10 @@ public class RuleParser {
      */
     public List<Rule> convertAllRules(RuleDefinition definition) {
         LOG.info("ルール変換開始: 定義数={}", definition.rules().size());
+        
+        // メタデータからネームスペースを取得
+        String namespace = definition.metadata() != null ? definition.metadata().namespace() : null;
+        LOG.info("ネームスペース: {}", namespace != null ? namespace : "default");
         
         List<Rule> rules = definition.rules().stream()
             .filter(spec -> {
@@ -107,8 +118,9 @@ public class RuleParser {
                 return Integer.compare(priorityA, priorityB);
             })
             .map(spec -> {
-                LOG.debug("ルール '{}' を変換: {} -> {}", spec.name(), spec.inputs(), spec.output());
-                return this.convertToRule(spec);
+                LOG.debug("ルール '{}' を変換: {} -> {} (namespace: {})", 
+                    spec.name(), spec.inputs(), spec.output(), namespace);
+                return this.convertToRule(spec, namespace);
             })
             .collect(Collectors.toList());
         

@@ -39,6 +39,7 @@ public class GenericVerificationResource {
         GenericVerificationRequest verificationRequest = new GenericVerificationRequest(
             request.query(),
             request.ruleFile(),
+            request.namespace(),  // ← 追加
             request.customFacts(),
             request.expectedOutputs(),
             request.tolerance(),
@@ -61,6 +62,7 @@ public class GenericVerificationResource {
         GenericVerificationRequest verificationRequest = new GenericVerificationRequest(
             request.query(),
             request.ruleFile(),
+            request.namespace(),  // ← 追加
             null,  // customFacts
             null,  // expectedOutputs
             null,  // tolerance (デフォルト値を使用)
@@ -77,6 +79,7 @@ public class GenericVerificationResource {
 record VerifyRequest(
     String query,
     String ruleFile,
+    String namespace,  // ← 追加
     Map<String, List<Double>> customFacts,
     Map<String, Double> expectedOutputs,
     Double tolerance,
@@ -88,6 +91,7 @@ record VerifyRequest(
  */
 record SimpleVerifyRequest(
     String query,
-    String ruleFile
+    String ruleFile,
+    String namespace  // ← 追加
 ) {}
 

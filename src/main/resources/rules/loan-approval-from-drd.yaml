@@ -9,6 +9,7 @@ metadata:
   version: "1.1"
   description: "DRDで定義された融資審査プロセスをTensor Logicで実装（元：loan-approval.dmn）【v1.1: 民法改正対応、成年年齢を18歳に変更（2022年4月1日施行）】"
   author: "DMN Converter"
+  namespace: "loan-approval"
 
 # Input Data（DRDの入力データ）
 facts:
