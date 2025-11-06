@@ -1,0 +1,53 @@
+# ====================================
+# 天気と活動ルール
+# ====================================
+
+metadata:
+  name: "天気から活動を推論"
+  version: "1.0"
+  description: "天気から外出に適しているか判断"
+  author: "Tensor Logic Team"
+
+# 事実
+facts:
+  # 今日は晴れている
+  - name: today_is_sunny
+    description: "今日は晴れている"
+    notation: "Sunny(today)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [0.9]  # 90%の確率
+      confidence: 0.9
+  
+  # 晴れならば外出に適している
+  - name: sunny_good_for_outing
+    description: "晴れならば外出に適している"
+    notation: "Sunny(x) → GoodForOuting(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.85]]  # 85%（暑さ・寒さを考慮）
+      confidence: 0.85
+
+# 推論ルール
+rules:
+  - name: infer_good_outing
+    description: "晴れ ∧ 晴れなら外出適 ⟹ 外出に適している"
+    notation: "Sunny(today) ∧ (Sunny→GoodOuting) ⟹ GoodOuting(today)"
+    inputs:
+      - today_is_sunny
+      - sunny_good_for_outing
+    output: today_good_for_outing
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: today_good_for_outing
+    description: "今日は外出に適している"
+    notation: "GoodForOuting(today)"
+    expected_value: 0.765  # 0.9 × 0.85 = 0.765
+    tolerance: 0.1
+

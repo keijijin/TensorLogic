@@ -1,0 +1,82 @@
+# ====================================
+# 年齢と資格のルール
+# ====================================
+
+metadata:
+  name: "年齢と資格の推論"
+  version: "1.1"
+  description: "年齢から資格取得の可否を推論【v1.1: 民法改正対応、成年年齢18歳（2022年4月1日施行）】"
+  author: "Tensor Logic Team"
+
+# 事実
+facts:
+  # 太郎は18歳である
+  - name: taro_is_18
+    description: "太郎は18歳である"
+    notation: "Age(taro, 18)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]  # 100%確実
+      confidence: 1.0
+  
+  # 18歳以上は成人である
+  - name: age18_is_adult
+    description: "18歳以上ならば成人である（民法第4条、2022年4月1日施行）"
+    notation: "Age(x, 18+) → Adult(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[1.0]]  # 100%（日本の法律）
+      confidence: 1.0
+  
+  # 成人は運転免許を取得できる
+  - name: adult_can_drive
+    description: "成人ならば運転免許を取得できる"
+    notation: "Adult(x) → CanGetLicense(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.95]]  # 95%（健康状態等の条件あり）
+      confidence: 0.95
+
+# 推論ルール
+rules:
+  # ルール1: 18歳 → 成人
+  - name: infer_adult
+    description: "太郎は18歳 ∧ 18歳以上は成人 ⟹ 太郎は成人"
+    notation: "Age(taro,18) ∧ (Age18+→Adult) ⟹ Adult(taro)"
+    inputs:
+      - taro_is_18
+      - age18_is_adult
+    output: taro_is_adult
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+  
+  # ルール2: 成人 → 免許取得可能
+  - name: infer_can_drive
+    description: "太郎は成人 ∧ 成人は免許取得可 ⟹ 太郎は免許取得可"
+    notation: "Adult(taro) ∧ (Adult→CanDrive) ⟹ CanDrive(taro)"
+    inputs:
+      - taro_is_adult
+      - adult_can_drive
+    output: taro_can_drive
+    operation: MODUS_PONENS
+    priority: 2
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: taro_is_adult
+    description: "太郎は成人である"
+    notation: "Adult(taro)"
+    expected_value: 1.0  # 1.0 × 1.0 = 1.0
+    tolerance: 0.05
+  
+  - name: taro_can_drive
+    description: "太郎は運転免許を取得できる"
+    notation: "CanGetLicense(taro)"
+    expected_value: 0.95  # 1.0 × 0.95 = 0.95
+    tolerance: 0.05
+

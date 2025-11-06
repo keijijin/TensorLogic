@@ -28,6 +28,9 @@ public class LLMTensorLogicIntegration {
     
     /**
      * LLMの推論をTensor Logicで検証
+     * 
+     * 登録されているルールを使用する。
+     * ルールが登録されていない場合は、デフォルトのソクラテスルールを使用。
      */
     public VerifiedReasoningResult verifyLLMReasoning(String query) {
         LOG.info("質問を処理: {}", query);
@@ -37,10 +40,47 @@ public class LLMTensorLogicIntegration {
         LOG.info("LLMの回答: {} (確信度: {})", llmResponse.answer(), llmResponse.confidence());
         
         // 2. Tensor Logicで検証
-        // 例: ソクラテスの三段論法
-        INDArray socratesIsHuman = Nd4j.create(new double[]{llmResponse.confidence()});
-        INDArray humanIsMortal = Nd4j.create(new double[][]{{0.98}});
-        INDArray expectedConclusion = Nd4j.create(new double[]{llmResponse.confidence()});
+        // 登録されているルールを使用（存在する場合）
+        INDArray socratesIsHuman;
+        INDArray humanIsMortal;
+        INDArray expectedConclusion;
+        
+        // TensorLogicEngineに登録されているルールを確認
+        INDArray registeredHuman = tensorLogic.getFact("socrates_is_human");
+        INDArray registeredMortal = tensorLogic.getFact("human_is_mortal");
+        
+        if (registeredHuman != null && registeredMortal != null) {
+            // 登録されているルールを使用
+            LOG.info("✓ 登録されているルールを使用します");
+            socratesIsHuman = registeredHuman;
+            humanIsMortal = registeredMortal;
+            
+            // 期待される結論を取得（または計算）
+            INDArray registeredConclusion = tensorLogic.getFact("socrates_is_mortal");
+            if (registeredConclusion != null) {
+                expectedConclusion = registeredConclusion;
+                LOG.info("  登録された結論を使用: {}", expectedConclusion.getDouble(0));
+            } else {
+                // 前向き推論を実行して結論を得る
+                tensorLogic.forwardChain();
+                registeredConclusion = tensorLogic.getFact("socrates_is_mortal");
+                if (registeredConclusion != null) {
+                    expectedConclusion = registeredConclusion;
+                    LOG.info("  前向き推論で計算された結論: {}", expectedConclusion.getDouble(0));
+                } else {
+                    // フォールバック: LLMの確信度を使用
+                    expectedConclusion = Nd4j.create(new double[]{llmResponse.confidence()});
+                    LOG.warn("  結論が計算できませんでした。LLM確信度を使用: {}", llmResponse.confidence());
+                }
+            }
+        } else {
+            // デフォルトのソクラテスルールを使用（下位互換性のため）
+            LOG.warn("⚠️ ルールが登録されていません。デフォルト値を使用します");
+            LOG.warn("   /api/rules/load-example を実行してルールを登録してください");
+            socratesIsHuman = Nd4j.create(new double[]{llmResponse.confidence()});
+            humanIsMortal = Nd4j.create(new double[][]{{0.98}});
+            expectedConclusion = Nd4j.create(new double[]{llmResponse.confidence()});
+        }
         
         ValidationResult validation = tensorLogic.validateReasoning(
             socratesIsHuman,

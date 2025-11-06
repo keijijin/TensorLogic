@@ -1,0 +1,53 @@
+# ====================================
+# 動物分類ルール
+# ====================================
+
+metadata:
+  name: "動物分類の推論"
+  version: "1.0"
+  description: "イルカが温血動物であることを推論"
+  author: "Tensor Logic Team"
+
+# 事実
+facts:
+  # イルカは哺乳類である
+  - name: dolphin_is_mammal
+    description: "イルカは哺乳類である"
+    notation: "Mammal(dolphin)"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]  # 100%確実
+      confidence: 1.0
+  
+  # 哺乳類は温血動物である
+  - name: mammal_is_warmblooded
+    description: "哺乳類ならば温血動物である"
+    notation: "Mammal(x) → WarmBlooded(x)"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[0.98]]  # 98%の確率
+      confidence: 0.98
+
+# 推論ルール
+rules:
+  - name: infer_warmblooded
+    description: "イルカは哺乳類 ∧ 哺乳類は温血 ⟹ イルカは温血"
+    notation: "Mammal(dolphin) ∧ (Mammal→WarmBlooded) ⟹ WarmBlooded(dolphin)"
+    inputs:
+      - dolphin_is_mammal
+      - mammal_is_warmblooded
+    output: dolphin_is_warmblooded
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: dolphin_is_warmblooded
+    description: "イルカは温血動物である"
+    notation: "WarmBlooded(dolphin)"
+    expected_value: 0.98  # 1.0 × 0.98 = 0.98
+    tolerance: 0.05
+

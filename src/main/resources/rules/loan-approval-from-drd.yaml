@@ -1,0 +1,109 @@
+# ====================================
+# DRDから生成された融資審査ルール
+# ====================================
+# 元のDRD: 年齢・収入・信用スコア → 融資可否
+# 出典: loan-approval.dmn
+
+metadata:
+  name: "融資審査ルール（DRD由来）"
+  version: "1.1"
+  description: "DRDで定義された融資審査プロセスをTensor Logicで実装（元：loan-approval.dmn）【v1.1: 民法改正対応、成年年齢を18歳に変更（2022年4月1日施行）】"
+  author: "DMN Converter"
+
+# Input Data（DRDの入力データ）
+facts:
+  # Input: 申請者の年齢（18歳以上）
+  - name: applicant_age
+    description: "申請者は18歳以上である（DRD: 年齢）"
+    notation: "Age(applicant) >= 18"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [1.0]  # 確実（事実）
+      confidence: 1.0
+  
+  # ビジネスルール: 年齢から成人への含意
+  - name: age_implies_adult
+    description: "18歳以上ならば成人である（民法第4条、2022年4月1日施行）"
+    notation: "Age >= 18 → Adult"
+    tensor:
+      type: matrix
+      shape: [1, 1]
+      values: [[1.0]]  # 法的に確実
+      confidence: 1.0
+  
+  # Input: 申請者の収入（300万円以上）
+  - name: applicant_income
+    description: "申請者の年収は300万円以上である（DRD: 収入）"
+    notation: "Income(applicant) >= 3000000"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [0.95]  # 95%の確度（書類ベース）
+      confidence: 0.95
+  
+  # Input: 信用スコア良好
+  - name: credit_score_good
+    description: "信用スコアが良好である（DRD: 信用スコア）"
+    notation: "CreditScore(applicant) > 650"
+    tensor:
+      type: vector
+      shape: [1]
+      values: [0.90]  # 90%の確度
+      confidence: 0.90
+
+# Decision（DRDの決定ノード）
+rules:
+  # Decision 1: 成人判定（DRD: 年齢 → 成人判定）
+  - name: determine_adult_status
+    description: "年齢から成人かどうかを判定（民法第4条: 18歳以上は成人、2022年4月1日施行）"
+    notation: "Age(申請者) ∧ (Age>=18→Adult) ⟹ Adult(申請者)"
+    inputs:
+      - applicant_age
+      - age_implies_adult
+    output: is_adult
+    operation: MODUS_PONENS
+    priority: 1
+    enabled: true
+  
+  # Decision 2: 財務適格性（DRD: 収入 ∧ 信用スコア → 財務適格性）
+  - name: determine_financial_eligibility
+    description: "収入と信用スコアから財務適格性を判定"
+    notation: "Income ∧ CreditScore → FinanciallyEligible"
+    inputs:
+      - applicant_income
+      - credit_score_good
+    output: financially_eligible
+    operation: CONJUNCTION  # 両方満たす必要がある
+    priority: 1
+    enabled: true
+  
+  # Decision 3: 融資可否（DRD: 成人 ∧ 財務適格 → 融資承認）
+  - name: determine_loan_approval
+    description: "成人かつ財務適格であれば融資承認（社内融資規定）"
+    notation: "Adult ∧ FinanciallyEligible → LoanApproved"
+    inputs:
+      - is_adult
+      - financially_eligible
+    output: loan_approved
+    operation: CONJUNCTION
+    priority: 2
+    enabled: true
+
+# 期待される結果
+expected_results:
+  - name: is_adult
+    description: "成人である"
+    expected_value: 1.0
+    tolerance: 0.05
+  
+  - name: financially_eligible
+    description: "財務的に適格である"
+    expected_value: 0.855  # min(0.95, 0.90)
+    tolerance: 0.1
+  
+  - name: loan_approved
+    description: "融資が承認される"
+    expected_value: 0.855  # min(1.0, 0.855)
+    tolerance: 0.1
+
