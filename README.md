@@ -314,6 +314,83 @@ np.einsum('ij->ji', A)  # A^T
 
 ---
 
+## 🏗️ Java実装（エンタープライズ版）
+
+### 概要
+
+このプロジェクトには、**Java 21 + Quarkus + Apache Camel** による本格的なエンタープライズ実装も含まれています。
+
+### 主な機能
+
+| 機能 | 説明 | ステータス |
+|------|------|-----------|
+| **Forward Chaining** | 前向き推論（データ駆動） | ✅ 実装済み |
+| **Backward Chaining** | 後向き推論（目標駆動） | ✅ **NEW!** |
+| **LLM統合** | OpenAI GPT連携 | ✅ 実装済み |
+| **ルール外部化** | YAMLでルール定義 | ✅ 実装済み |
+| **REST API** | HTTP/JSON API | ✅ 実装済み |
+| **Apache Camel** | エンタープライズ統合 | ✅ 実装済み |
+| **DRD変換** | Decision Requirement Diagram対応 | ✅ 実装済み |
+
+### Backward Chaining（後向き推論） 🆕
+
+**目標から逆向きに推論**する新機能を追加しました！
+
+```bash
+# 後向き推論の実行例
+curl -X POST http://localhost:8080/api/tensor-logic/backward-chain \
+  -H 'Content-Type: application/json' \
+  -d '{"goal": "loan_approved"}'
+```
+
+**結果:**
+```json
+{
+  "success": true,
+  "goal": "loan_approved",
+  "goalConfidence": 0.9000,
+  "reasoningPath": [
+    "applicant_age [既知]",
+    "age_implies_adult [既知]",
+    "is_adult ← [applicant_age, age_implies_adult]",
+    "financially_eligible ← [applicant_income, credit_score_good]",
+    "loan_approved ← [is_adult, financially_eligible]"
+  ]
+}
+```
+
+**用途:**
+- 🔍 診断システム（「なぜこの結果？」）
+- 📊 意思決定の説明責任
+- 🎯 効率的な推論（必要な計算のみ）
+- 🔧 デバッグと根本原因分析
+
+詳細は [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) を参照。
+
+### クイックスタート（Java版）
+
+```bash
+# Quarkusアプリケーションの起動
+mvn quarkus:dev
+
+# ルールのロード
+curl -X POST http://localhost:8080/api/rules/load-resource \
+  -H 'Content-Type: application/json' \
+  -d '{"resourcePath": "rules/loan-approval-from-drd.yaml"}'
+
+# Backward Chainingのテスト
+./test-backward-chaining.sh
+```
+
+### ドキュメント
+
+- [TENSOR_LOGIC_ENGINE_GUIDE.md](TENSOR_LOGIC_ENGINE_GUIDE.md) - 完全ガイド
+- [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) - 後向き推論ガイド 🆕
+- [DRD_TO_TENSOR_LOGIC_GUIDE.md](DRD_TO_TENSOR_LOGIC_GUIDE.md) - DRD変換ガイド
+- [VERIFICATION_REPORT_LOAN_APPROVAL.md](VERIFICATION_REPORT_LOAN_APPROVAL.md) - 検証レポート
+
+---
+
 ## 🚀 実用的な応用分野
 
 ### 1. 知識グラフの推論

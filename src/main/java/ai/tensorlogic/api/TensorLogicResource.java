@@ -1,5 +1,7 @@
 package ai.tensorlogic.api;
 
+import ai.tensorlogic.core.BackwardChainingResult;
+import ai.tensorlogic.core.TensorLogicEngine;
 import ai.tensorlogic.integration.*;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -18,6 +20,9 @@ public class TensorLogicResource {
     
     @Inject
     LLMTensorLogicIntegration integration;
+    
+    @Inject
+    TensorLogicEngine engine;
     
     /**
      * LLMの推論を検証
@@ -55,6 +60,17 @@ public class TensorLogicResource {
     public ConfidencePropagationResult propagateConfidence(
             ConfidencePropagationRequest request) {
         return integration.propagateConfidence(request.confidences());
+    }
+    
+    /**
+     * 後向き推論（Backward Chaining）
+     */
+    @POST
+    @Path("/backward-chain")
+    @Operation(summary = "後向き推論",
+               description = "目標から逆向きに推論し、必要な前提条件を探索します")
+    public BackwardChainingResult backwardChain(BackwardChainingRequest request) {
+        return engine.backwardChain(request.goal());
     }
     
     /**

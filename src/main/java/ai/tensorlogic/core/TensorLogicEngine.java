@@ -7,14 +7,18 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Tensor Logic エンジンの実装
  * 
  * テンソル演算を用いて論理推論を実行します。
  * Python版のTensorLogicBaseに相当します。
+ * 
+ * 主要機能:
+ * - Forward Chaining（前向き推論）: 事実からルールを適用して新しい事実を導出
+ * - Backward Chaining（後向き推論）: 目標から逆向きに必要な条件を探索
  */
 @ApplicationScoped
 public class TensorLogicEngine {
@@ -81,6 +85,88 @@ public class TensorLogicEngine {
     }
     
     /**
+     * 後向き推論を実行
+     * 
+     * 目標から逆向きに推論し、その目標を達成するために必要な前提条件を探索します。
+     * 
+     * @param goal 達成したい目標（事実の名前）
+     * @return 後向き推論の結果
+     */
+    public BackwardChainingResult backwardChain(String goal) {
+        LOG.info("=== 後向き推論を開始: 目標='{}' ===", goal);
+        
+        List<String> path = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        Map<String, INDArray> requiredFacts = new HashMap<>();
+        
+        boolean success = backwardChainRecursive(goal, path, visited, requiredFacts);
+        
+        if (success) {
+            LOG.info("✓ 後向き推論成功: 目標 '{}' は達成可能", goal);
+            LOG.info("  推論パス: {}", String.join(" <- ", path));
+            LOG.info("  必要な事実: {}", requiredFacts.keySet());
+        } else {
+            LOG.warn("✗ 後向き推論失敗: 目標 '{}' は達成不可能", goal);
+        }
+        
+        return new BackwardChainingResult(success, goal, path, requiredFacts);
+    }
+    
+    /**
+     * 後向き推論の再帰的実装
+     */
+    private boolean backwardChainRecursive(String goal, List<String> path, 
+                                           Set<String> visited, Map<String, INDArray> requiredFacts) {
+        // 既に訪問済みの場合は無限ループを防ぐ
+        if (visited.contains(goal)) {
+            return true;
+        }
+        visited.add(goal);
+        
+        // 既に事実として存在する場合
+        if (facts.containsKey(goal)) {
+            path.add(goal + " [既知]");
+            requiredFacts.put(goal, facts.get(goal));
+            LOG.debug("  ✓ '{}' は既知の事実", goal);
+            return true;
+        }
+        
+        // 目標を生成できるルールを探す
+        for (Map.Entry<String, Rule> entry : rules.entrySet()) {
+            Rule rule = entry.getValue();
+            
+            if (rule.output().equals(goal)) {
+                LOG.debug("  → ルール '{}' が目標 '{}' を生成可能: {} -> {}", 
+                    entry.getKey(), goal, rule.inputs(), rule.output());
+                
+                // このルールのすべての入力を再帰的に解決
+                boolean allInputsResolved = true;
+                for (String input : rule.inputs()) {
+                    if (!backwardChainRecursive(input, path, visited, requiredFacts)) {
+                        allInputsResolved = false;
+                        break;
+                    }
+                }
+                
+                if (allInputsResolved) {
+                    // すべての入力が解決できた場合、ルールを適用
+                    path.add(goal + " ← [" + String.join(", ", rule.inputs()) + "]");
+                    
+                    // ルールを適用して目標を計算
+                    INDArray result = applyRule(rule);
+                    requiredFacts.put(goal, result);
+                    
+                    LOG.debug("  ✓ ルール適用成功: {} = {}", goal, result);
+                    return true;
+                }
+            }
+        }
+        
+        LOG.debug("  ✗ '{}' を生成するルールが見つかりません", goal);
+        return false;
+    }
+    
+    /**
      * ルールを適用
      */
     private INDArray applyRule(Rule rule) {
@@ -92,10 +178,16 @@ public class TensorLogicEngine {
                 yield premise.mmul(implication);
             }
             case CONJUNCTION -> {
-                // A と B の論理積
+                // A と B の論理積（最小値）
                 INDArray a = facts.get(rule.inputs().get(0));
                 INDArray b = facts.get(rule.inputs().get(1));
                 yield Transforms.min(a, b);
+            }
+            case DISJUNCTION -> {
+                // A または B の論理和（最大値）
+                INDArray a = facts.get(rule.inputs().get(0));
+                INDArray b = facts.get(rule.inputs().get(1));
+                yield Transforms.max(a, b);
             }
             case CHAIN -> {
                 // 関係の合成（行列の積）
