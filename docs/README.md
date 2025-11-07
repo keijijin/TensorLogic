@@ -14,6 +14,8 @@
 |---------|------|
 | **QUICKSTART.md** | クイックスタートガイド |
 | **TENSOR_LOGIC_ENGINE_GUIDE.md** | Tensor Logicエンジンの完全ガイド |
+| **APACHE_CAMEL_USAGE.md** | Apache Camel使用状況ガイド 🆕 |
+| **QUERY_TO_TENSORLOGIC_FLOW.md** | 質問からTensor Logicへの変換フロー 🆕 |
 | **BACKWARD_CHAINING_GUIDE.md** | 後向き推論の実装と使い方 |
 | **LLM_TO_TENSOR_LOGIC_GUIDE.md** | LLM推論のTensor Logic化ガイド |
 | **GENERIC_LLM_VERIFICATION_GUIDE.md** | 汎用LLM検証システムのガイド |
@@ -128,8 +130,8 @@
 
 ## 📈 **ドキュメント統計**
 
-- **総ドキュメント数**: 28
-- **ガイド**: 14
+- **総ドキュメント数**: 30
+- **ガイド**: 16 🆕
 - **レポート**: 5
 - **テスト**: 3
 - **実装**: 4
