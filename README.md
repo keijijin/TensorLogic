@@ -366,7 +366,7 @@ curl -X POST http://localhost:8080/api/tensor-logic/backward-chain \
 - 🎯 効率的な推論（必要な計算のみ）
 - 🔧 デバッグと根本原因分析
 
-詳細は [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) を参照。
+詳細は [後向き推論ガイド](docs/guides/BACKWARD_CHAINING_GUIDE.md) を参照。
 
 ### Namespace（ネームスペース） 🆕
 
@@ -403,7 +403,7 @@ curl -X POST http://localhost:8080/api/verify/simple \
 - ⚡ 効率的な推論（必要なルールのみ適用）
 - 🧪 テストの容易性
 
-詳細は [NAMESPACE_GUIDE.md](NAMESPACE_GUIDE.md) を参照。
+詳細は [ネームスペースガイド](docs/guides/NAMESPACE_GUIDE.md) を参照。
 
 ### クイックスタート（Java版）
 
@@ -420,13 +420,27 @@ curl -X POST http://localhost:8080/api/rules/load-resource \
 ./test-backward-chaining.sh
 ```
 
-### ドキュメント
+### 📚 ドキュメント
 
-- [TENSOR_LOGIC_ENGINE_GUIDE.md](TENSOR_LOGIC_ENGINE_GUIDE.md) - 完全ガイド
-- [BACKWARD_CHAINING_GUIDE.md](BACKWARD_CHAINING_GUIDE.md) - 後向き推論ガイド
-- [NAMESPACE_GUIDE.md](NAMESPACE_GUIDE.md) - ネームスペースガイド 🆕
-- [DRD_TO_TENSOR_LOGIC_GUIDE.md](DRD_TO_TENSOR_LOGIC_GUIDE.md) - DRD変換ガイド
-- [VERIFICATION_REPORT_LOAN_APPROVAL.md](VERIFICATION_REPORT_LOAN_APPROVAL.md) - 検証レポート
+**📂 [完全なドキュメント一覧はこちら](docs/README.md)**
+
+#### クイックリンク
+
+**ガイド:**
+- [Tensor Logic エンジンガイド](docs/guides/TENSOR_LOGIC_ENGINE_GUIDE.md) - 完全ガイド
+- [後向き推論ガイド](docs/guides/BACKWARD_CHAINING_GUIDE.md) - 後向き推論の使い方
+- [ネームスペースガイド](docs/guides/NAMESPACE_GUIDE.md) - ネームスペース機能 🆕
+- [LLM推論のTensor Logic化](docs/guides/LLM_TO_TENSOR_LOGIC_GUIDE.md) - LLM統合ガイド
+- [YAMLルール作成ガイド](docs/guides/YAML_RULE_CREATION_GUIDE.md) - ルールファイルの作成方法
+
+**レポート:**
+- [LLM推論検証レポート](docs/reports/LLM_REASONING_VERIFICATION_REPORT.md) - 実証実験結果
+- [融資審査検証レポート](docs/reports/VERIFICATION_REPORT_LOAN_APPROVAL.md) - 応用事例
+- [テスト結果レポート](docs/reports/LLM_REASONING_TEST_REPORT.md) - 22テストの完全レポート
+
+**その他:**
+- [テストガイド](docs/testing/TEST_GUIDE.md) - テストの実行方法
+- [実装詳細](docs/implementation/JAVA_IMPLEMENTATION.md) - Java実装の詳細
 
 ---
 
