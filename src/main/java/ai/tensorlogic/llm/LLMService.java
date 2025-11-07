@@ -33,6 +33,69 @@ public class LLMService {
     private OpenAiService openAiService;
     
     /**
+     * LLMに質問し、詳細な推論ステップを取得（Tensor Logic化用）
+     */
+    public LLMReasoningResult queryWithDetailedReasoning(String query) {
+        LOG.info("詳細な推論ステップを取得: {}", query);
+        
+        // 構造化された推論を要求するプロンプト
+        String structuredPrompt = """
+            質問: %s
+            
+            以下の形式で段階的に推論してください：
+            
+            ステップ1: [最初の前提や事実] (確信度: XX%%)
+            ステップ2: [次の前提や規則] (確信度: XX%%)
+            ステップ3: [論理的推論] (確信度: XX%%)
+            ...
+            
+            各ステップで、確信度を0-100%%で示してください。
+            最後に結論を述べてください。
+            """.formatted(query);
+        
+        LLMResponse response = queryWithReasoning(structuredPrompt);
+        
+        // 推論ステップをパース
+        List<String> reasoningSteps = parseReasoningSteps(response.answer());
+        
+        return new LLMReasoningResult(
+            query,
+            response.answer(),
+            reasoningSteps,
+            response.confidence()
+        );
+    }
+    
+    /**
+     * LLMの回答から推論ステップを抽出
+     */
+    private List<String> parseReasoningSteps(String answer) {
+        List<String> steps = new java.util.ArrayList<>();
+        String[] lines = answer.split("\n");
+        
+        for (String line : lines) {
+            // "ステップX:" で始まる行を抽出
+            if (line.matches(".*ステップ\\d+:.*") || 
+                line.matches(".*Step \\d+:.*") ||
+                line.matches("^\\d+\\..*")) {
+                steps.add(line.trim());
+            }
+        }
+        
+        // ステップが見つからない場合は、reasoning_stepsをそのまま使用
+        if (steps.isEmpty() && answer.contains("推論")) {
+            // 段落ごとに分割
+            for (String para : answer.split("\n\n")) {
+                if (!para.isBlank()) {
+                    steps.add(para.trim());
+                }
+            }
+        }
+        
+        return steps;
+    }
+    
+    /**
      * LLMに質問し、Chain-of-Thought推論を取得
      */
     public LLMResponse queryWithReasoning(String query) {

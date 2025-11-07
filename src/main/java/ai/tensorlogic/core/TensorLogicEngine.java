@@ -45,6 +45,14 @@ public class TensorLogicEngine {
     }
     
     /**
+     * 推論ルールを追加（名前はネームスペースとハッシュコードから生成）
+     */
+    public void addRule(Rule rule) {
+        String ruleName = rule.namespace() + "_" + rule.output();
+        addRule(ruleName, rule);
+    }
+    
+    /**
      * 全てのルールを取得（読み取り専用）
      */
     public Map<String, Rule> getAllRules() {
@@ -56,6 +64,15 @@ public class TensorLogicEngine {
      */
     public Map<String, INDArray> getAllFacts() {
         return Map.copyOf(facts);
+    }
+    
+    /**
+     * 全ての事実とルールをクリア
+     */
+    public void clear() {
+        facts.clear();
+        rules.clear();
+        LOG.info("全ての事実とルールをクリアしました");
     }
     
     /**
